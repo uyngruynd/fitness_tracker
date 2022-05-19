@@ -113,6 +113,9 @@ class SportsWalking(Training):
 class Swimming(Training):
     """Тренировка: плавание."""
 
+    CNT_11: ClassVar[float] = 1.1
+    LEN_STEP: ClassVar[float] = 1.38  # расстояние за один гребок
+
     def __init__(self,
                  action: int,
                  duration: float,
@@ -123,9 +126,6 @@ class Swimming(Training):
         super().__init__(action, duration, weight)
         self.length_pool = length_pool
         self.count_pool = count_pool
-
-    CNT_11: ClassVar[float] = 1.1
-    LEN_STEP: ClassVar[float] = 1.38  # расстояние за один гребок
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения для тренировки: плавание."""
