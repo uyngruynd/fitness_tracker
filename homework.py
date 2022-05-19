@@ -23,17 +23,22 @@ class InfoMessage:
         return self.SAMPLE.format(**asdict(self))
 
 
-@dataclass
 class Training:
     """Базовый класс тренировки."""
-
-    action: int
-    duration: float
-    weight: float
 
     LEN_STEP: ClassVar[float] = 0.65  # один шаг, метров
     M_IN_KM: ClassVar[int] = 1000  # константа для перевода значений из м.в км.
     HRS_IN_MIN: ClassVar[int] = 60  # константа для перевода часов в минуты
+
+    def __init__(self,
+                 action: int,
+                 duration: float,
+                 weight: float,
+                 ) -> None:
+
+        self.action = action
+        self.duration = duration
+        self.weight = weight
 
     def get_distance(self) -> float:
         """Вернуть преодоленную дистанцию в километрах."""
@@ -59,12 +64,18 @@ class Training:
         return message
 
 
-@dataclass
 class Running(Training):
     """Тренировка: бег."""
 
     CNT_18: ClassVar[int] = 18
     CNT_20: ClassVar[int] = 20
+
+    def __init__(self,
+                 action: int,
+                 duration: float,
+                 weight: float,
+                 ) -> None:
+        super().__init__(action, duration, weight)
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий для тренировки: бег."""
@@ -73,14 +84,20 @@ class Running(Training):
                 * Running.HRS_IN_MIN)
 
 
-@dataclass
 class SportsWalking(Training):
     """Тренировка: спортивная ходьба."""
 
-    height: float
-
     CNT_35: ClassVar[float] = 0.035
     CNT_29: ClassVar[float] = 0.029
+
+    def __init__(self,
+                 action: int,
+                 duration: float,
+                 weight: float,
+                 height: float
+                 ) -> None:
+        super().__init__(action, duration, weight)
+        self.height = height
 
     def get_spent_calories(self) -> float:
         """
@@ -93,12 +110,19 @@ class SportsWalking(Training):
                 * self.duration * self.HRS_IN_MIN)
 
 
-@dataclass
 class Swimming(Training):
     """Тренировка: плавание."""
 
-    length_pool: int
-    count_pool: int
+    def __init__(self,
+                 action: int,
+                 duration: float,
+                 weight: float,
+                 length_pool: int,
+                 count_pool: int
+                 ) -> None:
+        super().__init__(action, duration, weight)
+        self.length_pool = length_pool
+        self.count_pool = count_pool
 
     CNT_11: ClassVar[float] = 1.1
     LEN_STEP: ClassVar[float] = 1.38  # расстояние за один гребок
@@ -121,7 +145,6 @@ class Swimming(Training):
 
 def read_package(workout_type: str, data: list) -> Training:
     """Прочитать данные, полученные от датчиков."""
-
     used_classes: Dict[str, Type[Training]] = {'SWM': Swimming,
                                                'RUN': Running,
                                                'WLK': SportsWalking}
@@ -129,15 +152,12 @@ def read_package(workout_type: str, data: list) -> Training:
     if workout_type not in used_classes.keys():
         raise KeyError('Получен неизвестный тип тренировки')
 
-    # noinspection PyArgumentList
     return used_classes[workout_type](*data)
 
 
 def main(training: Training) -> None:
     """Главная функция."""
-
-    info = training.show_training_info()
-    print(info.get_message())
+    print(training.show_training_info().get_message())
 
 
 if __name__ == '__main__':
