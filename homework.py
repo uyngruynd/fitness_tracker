@@ -1,45 +1,39 @@
+from dataclasses import asdict, dataclass
+from typing import ClassVar, Dict, Type
+
+
+@dataclass
 class InfoMessage:
     """Информационное сообщение о тренировке."""
 
-    def __init__(self,
-                 training_type: str,
-                 duration: float,
-                 distance: float,
-                 speed: float,
-                 calories: float
-                 ) -> None:
+    training_type: str
+    duration: float
+    distance: float
+    speed: float
+    calories: float
 
-        self.training_type = training_type
-        self.duration = duration
-        self.distance = distance
-        self.speed = speed
-        self.calories = calories
+    SAMPLE: ClassVar[str] = ('Тип тренировки: {training_type}; '
+                             'Длительность: {duration:.3f} ч.; '
+                             'Дистанция: {distance:.3f} км; '
+                             'Ср. скорость: {speed:.3f} км/ч; '
+                             'Потрачено ккал: {calories:.3f}.')
 
     def get_message(self) -> str:
         """Возвращает строку сообщения."""
-        return (f'Тип тренировки: {self.training_type}; '
-                + f'Длительность: {self.duration:.3f} ч.; '
-                + f'Дистанция: {self.distance:.3f} км; '
-                + f'Ср. скорость: {self.speed:.3f} км/ч; '
-                + f'Потрачено ккал: {self.calories:.3f}.')
+        return self.SAMPLE.format(**asdict(self))
 
 
+@dataclass
 class Training:
     """Базовый класс тренировки."""
 
-    LEN_STEP = 0.65  # один шаг, метров
-    M_IN_KM = 1000  # константа для перевода значений из м.в км.
-    HRS_IN_MIN = 60  # константа для перевода часов в минуты
+    action: int
+    duration: float
+    weight: float
 
-    def __init__(self,
-                 action: int,
-                 duration: float,
-                 weight: float,
-                 ) -> None:
-
-        self.action = action
-        self.duration = duration
-        self.weight = weight
+    LEN_STEP: ClassVar[float] = 0.65  # один шаг, метров
+    M_IN_KM: ClassVar[int] = 1000  # константа для перевода значений из м.в км.
+    HRS_IN_MIN: ClassVar[int] = 60  # константа для перевода часов в минуты
 
     def get_distance(self) -> float:
         """Вернуть преодоленную дистанцию в километрах."""
@@ -51,7 +45,8 @@ class Training:
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        pass
+        raise NotImplementedError('Метод должен быть определен в классе-'
+                                  'наследнике')
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -64,18 +59,12 @@ class Training:
         return message
 
 
+@dataclass
 class Running(Training):
     """Тренировка: бег."""
 
-    CNT_18 = 18  # какая-то константа
-    CNT_20 = 20  # еще одна константа
-
-    def __init__(self,
-                 action: int,
-                 duration: float,
-                 weight: float,
-                 ) -> None:
-        super().__init__(action, duration, weight)
+    CNT_18: ClassVar[int] = 18
+    CNT_20: ClassVar[int] = 20
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий для тренировки: бег."""
@@ -84,20 +73,14 @@ class Running(Training):
                 * Running.HRS_IN_MIN)
 
 
+@dataclass
 class SportsWalking(Training):
     """Тренировка: спортивная ходьба."""
 
-    CNT_35 = 0.035  # какая-то константа
-    CNT_29 = 0.029  # еще одна константа
+    height: float
 
-    def __init__(self,
-                 action: int,
-                 duration: float,
-                 weight: float,
-                 height: float
-                 ) -> None:
-        super().__init__(action, duration, weight)
-        self.height = height
+    CNT_35: ClassVar[float] = 0.035
+    CNT_29: ClassVar[float] = 0.029
 
     def get_spent_calories(self) -> float:
         """
@@ -110,22 +93,15 @@ class SportsWalking(Training):
                 * self.duration * self.HRS_IN_MIN)
 
 
+@dataclass
 class Swimming(Training):
     """Тренировка: плавание."""
 
-    CNT_11 = 1.1  # какая-то константа
-    LEN_STEP = 1.38  # расстояние, преодолеваемое за один гребок
+    length_pool: int
+    count_pool: int
 
-    def __init__(self,
-                 action: int,
-                 duration: float,
-                 weight: float,
-                 length_pool: int,
-                 count_pool: int
-                 ) -> None:
-        super().__init__(action, duration, weight)
-        self.length_pool = length_pool
-        self.count_pool = count_pool
+    CNT_11: ClassVar[float] = 1.1
+    LEN_STEP: ClassVar[float] = 1.38  # расстояние за один гребок
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения для тренировки: плавание."""
@@ -146,10 +122,14 @@ class Swimming(Training):
 def read_package(workout_type: str, data: list) -> Training:
     """Прочитать данные, полученные от датчиков."""
 
-    used_classes = {'SWM': Swimming,
-                    'RUN': Running,
-                    'WLK': SportsWalking}
+    used_classes: Dict[str, Type[Training]] = {'SWM': Swimming,
+                                               'RUN': Running,
+                                               'WLK': SportsWalking}
 
+    if workout_type not in used_classes.keys():
+        raise KeyError('Получен неизвестный тип тренировки')
+
+    # noinspection PyArgumentList
     return used_classes[workout_type](*data)
 
 
@@ -157,8 +137,7 @@ def main(training: Training) -> None:
     """Главная функция."""
 
     info = training.show_training_info()
-    msg = info.get_message()
-    print(msg)
+    print(info.get_message())
 
 
 if __name__ == '__main__':
